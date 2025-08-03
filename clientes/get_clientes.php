@@ -12,21 +12,21 @@ $filtro = isset($data['filtro']) ? trim($data['filtro']) : '';
 $where = '';
 $params = [];
 if (!empty($filtro)) {
-    $where = "WHERE nombre ILIKE '%' || $1 || '%'";
+    $where = "WHERE nombre ILIKE '%' || $1 || '%' OR apellido ILIKE '%' || $1 || '%'";
     $params[] = $filtro;
 }
 
 // Consulta principal
 $query = "
-    SELECT id_cliente, nombre, rnc_cedula, tipo_entidad, tipo_identificacion, email, telefono, direccion, creado_en
-    FROM clientes
+    SELECT id_cliente, nombre, apellido, direccion, telefono, correo_electronico, fecha_registro
+    FROM cliente
     $where
-    ORDER BY creado_en DESC
+    ORDER BY fecha_registro DESC
     LIMIT $limit OFFSET $offset
 ";
 
 // Conteo total
-$countQuery = "SELECT COUNT(*) AS total FROM clientes $where";
+$countQuery = "SELECT COUNT(*) AS total FROM cliente $where";
 
 $result = pg_query_params($conn, $query, $params);
 $countResult = pg_query_params($conn, $countQuery, $params);

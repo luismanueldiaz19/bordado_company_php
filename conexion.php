@@ -1,7 +1,7 @@
 <?php
 $host = "localhost";
 $port = "5432";
-$dbname = "settingmat";
+$dbname = "bordado_company";
 $user = "postgres";
 $password = "123456";
 

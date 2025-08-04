@@ -19,10 +19,10 @@ if (!$start_date || !$usuario_id || !$orden_items_id || !$tipo_trabajo_id || !is
 pg_query($conn, "BEGIN");
 
 // Insertar hoja_produccion
-$sql_hoja = "INSERT INTO public.hoja_produccion(start_date, usuario_id, orden_items_id, tipo_trabajo_id)
-             VALUES ($1, $2, $3, $4) RETURNING hoja_produccion_id";
+$sql_hoja = "INSERT INTO public.hoja_produccion(start_date, usuario_id, orden_items_id, tipo_trabajo_id, estado_hoja)
+             VALUES ($1, $2, $3, $4, $5) RETURNING hoja_produccion_id";
 
-$res_hoja = pg_query_params($conn, $sql_hoja, [$start_date, $usuario_id, $orden_items_id, $tipo_trabajo_id]);
+$res_hoja = pg_query_params($conn, $sql_hoja, [$start_date, $usuario_id, $orden_items_id, $tipo_trabajo_id ,'EN PRODUCCION']);
 
 if (!$res_hoja) {
     pg_query($conn, "ROLLBACK");
@@ -31,6 +31,37 @@ if (!$res_hoja) {
 }
 
 $hoja_id = pg_fetch_result($res_hoja, 0, 'hoja_produccion_id');
+
+// ✅ Actualizar estado_produccion en orden_items
+$sql_update_orden = "UPDATE public.orden_items SET estado_produccion = $1 WHERE orden_items_id = $2";
+
+$res_update = pg_query_params($conn, $sql_update_orden, ['EN PRODUCCION', $orden_items_id]);
+
+if (!$res_update) {
+    pg_query($conn, "ROLLBACK");
+    json_response(['success' => false, 'message' => 'Error actualizando estado de orden_items']);
+    exit;
+}
+
+// ✅ Actualizar estado_general en list_ordenes usando orden_items_id
+$sql_list_ordenes = "
+    UPDATE public.list_ordenes 
+    SET estado_general = $1 
+    WHERE list_ordenes_id = (
+        SELECT list_ordenes_id 
+        FROM public.orden_items 
+        WHERE orden_items_id = $2
+        LIMIT 1
+    )
+";
+$res_list_ordenes = pg_query_params($conn, $sql_list_ordenes, ['EN PRODUCCION', $orden_items_id]);
+
+if (!$res_list_ordenes) {
+    pg_query($conn, "ROLLBACK");
+    json_response(['success' => false, 'message' => 'Error actualizando estado en list_ordenes']);
+    exit;
+}
+//UPDATE public.list_ordenes SET estado_general=$1 WHERE list_ordenes_id = $2
 
 $errores = [];
 $mensajes = [];

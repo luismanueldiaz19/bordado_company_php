@@ -17,10 +17,13 @@ try {
     }
 
     $input = json_decode(file_get_contents('php://input'), true);
-    $id_depart = $input['id_depart'] ?? null;
 
-    if (!$id_depart) {
-        throw new Exception('El campo "id_depart" es requerido.');
+    $id_depart = $input['id_depart'] ?? null;
+    $start_date_from = $input['start_date_from'] ?? null;
+    $start_date_to = $input['start_date_to'] ?? null;
+
+    if (!$id_depart || !$start_date_from || !$start_date_to) {
+        throw new Exception('Los campos "id_depart", "start_date_from" y "start_date_to" son requeridos.');
     }
 
     $sql = "
@@ -61,11 +64,13 @@ try {
         JOIN public.planificacion_work pw ON pw.orden_items_id = i.orden_items_id
         JOIN public.departments d ON d.id = pw.id_depart
         JOIN public.users ON users.id = h.usuario_id
-       WHERE d.id = $1 AND h.estado_hoja != 'COMPLETADO'
+         WHERE d.id = $1 
+          AND h.estado_hoja = 'COMPLETADO'
+        AND h.start_date BETWEEN $2 AND $3
         ORDER BY h.hoja_produccion_id DESC, c.hoja_produccion_campos_id
     ";
 
-    $res = pg_query_params($conn, $sql, [$id_depart]);
+     $res = pg_query_params($conn, $sql, [$id_depart, $start_date_from, $start_date_to]);
 
     if (!$res) {
         throw new Exception('Error en la consulta: ' . pg_last_error($conn));

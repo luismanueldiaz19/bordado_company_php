@@ -19,12 +19,13 @@ try {
     $end_date = $data['end_date'] ?? null;
     $estado_hoja = $data['estado_hoja'] ?? null;
     $observaciones_hoja = $data['observaciones_hoja'] ?? null;
+    $orden_items_id = $data['orden_items_id'] ?? null;
 
    $missingFields = [];
 
 if (!$hoja_id) $missingFields[] = 'hoja_produccion_id';
 if (!$start_date) $missingFields[] = 'start_date';
-// end_date es opcional
+if (!$orden_items_id) $missingFields[] = 'orden_items_id';
 if (!$estado_hoja) $missingFields[] = 'estado_hoja';
 
 if (!empty($missingFields)) {
@@ -50,6 +51,15 @@ if (!empty($missingFields)) {
     if (!$res) {
         throw new Exception('Error al actualizar: ' . pg_last_error($conn));
     }
+    // ✅ Actualizar estado_produccion en orden_items
+     $sql_update_orden = "UPDATE public.orden_items SET estado_produccion = $1 WHERE orden_items_id = $2";
+     $res_update = pg_query_params($conn, $sql_update_orden, [$estado_hoja, $orden_items_id]);
+
+if (!$res_update) {
+
+    json_response(['success' => false, 'message' => 'Error actualizando estado de orden_items']);
+    exit;
+}
 
     json_response([
         'success' => true,

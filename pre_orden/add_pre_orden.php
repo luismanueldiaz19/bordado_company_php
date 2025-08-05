@@ -67,14 +67,14 @@ $insertedItems = [];
 
 foreach ($data['items'] as $item) {
     // Validar datos mínimos del item
-    if (!isset($item['id_producto'], $item['cant'], $item['detalles_productos'], $item['nota'], $item['estado_produccion'])) {
+    if (!isset($item['id_producto'], $item['cant'], $item['detalles_productos'], $item['nota'], $item['estado_produccion']  , $item['precio_final']  )  ) {
         continue;
     }
 
     // 2. Insertar en orden_items
     $sqlItem = "INSERT INTO public.orden_items (
-        list_ordenes_id, id_producto, cant, detalles_productos, nota, estado_produccion
-    ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING orden_items_id";
+        list_ordenes_id, id_producto, cant, detalles_productos, nota, estado_produccion, precio_final
+    ) VALUES ($1, $2, $3, $4, $5, $6,$7) RETURNING orden_items_id";
 
     $paramsItem = [
         $list_ordenes_id,
@@ -82,7 +82,8 @@ foreach ($data['items'] as $item) {
         $item['cant'],
         $item['detalles_productos'],
         $item['nota'],
-        $item['estado_produccion']
+        $item['estado_produccion'],
+        $item['precio_final'], 
     ];
 
     $resItem = pg_query_params($conn, $sqlItem, $paramsItem);
